@@ -17,6 +17,10 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Postgress valuable information
+.env
+.postgress-secrets
+
 # Go workspace file
 go.work
 go.work.sum
