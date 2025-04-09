@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: reserving-db
+    restart: always
+    env_file:
+      - ./.postgress-secrets
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate:v4.15.2
+    container_name: reserving-migrate
+    command: ["-path", "/migrations", "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=disable", "up"]
+    env_file:
+      - ./.postgress-secrets
+    volumes:
+      - ./reserving-service/db/migrations:/migrations
+    depends_on:
+      - postgres
+
+  reserving-service:
+    build: .
+    container_name: reserving-service
+    restart: always
+    depends_on:
+      - postgres
+      - migrate
+    ports:
+      - "8082:8082"
+    env_file:
+      - ./.postgress-secrets
+  
+volumes:
+  pg_data:
