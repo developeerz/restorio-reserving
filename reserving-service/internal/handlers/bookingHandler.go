@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
@@ -36,6 +37,11 @@ type UserReservation struct {
 	ReservationTimeTo   time.Time `db:"reservation_time_to" json:"reservation_time_to"`
 }
 
+type TimeSlot struct {
+	FreeFrom  time.Time `json:"free_from"`
+	FreeUntil time.Time `json:"free_until"`
+}
+
 func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reservationFrom := c.Query("reservation_time_from")
@@ -43,14 +49,18 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 
 		// Парсим время
 		fromTime, err := time.Parse(time.RFC3339, reservationFrom)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reservation_time_from format"})
+		if utilities.JSONError(c, err, http.StatusBadRequest, "Invalid reservation_time_from format", "Your value: ", fromTime) {
 			return
 		}
 
 		toTime, err := time.Parse(time.RFC3339, reservationTo)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reservation_time_to format"})
+		if utilities.JSONError(c, err, http.StatusBadRequest, "Invalid reservation_time_to format", "Your value: ", toTime) {
+			return
+		}
+
+		//Не то чтобы это было необходимо, но для подстравховки фронта может пригодиться
+		if toTime.Before(fromTime) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "reservation_time_to must be after reservation_time_from"})
 			return
 		}
 
@@ -61,15 +71,14 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 			JOIN restaurants r ON t.restaurant_id = r.restaurant_id
 			WHERE t.table_id NOT IN (
 				SELECT table_id FROM reservations 
-				WHERE reservation_time_from < $1
-				AND reservation_time_to > $2
+				WHERE NOT (reservation_time_to <= $1 OR reservation_time_from >= $2)
 			);
 		`
 
 		var freeTables []FreeTable
 		err = db.Select(&freeTables, query, fromTime, toTime)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения данных"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения данных", "details": err.Error()})
 			return
 		}
 
@@ -97,6 +106,12 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 		toTime, err := time.Parse(time.RFC3339, req.ReservationTimeTo)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат reservation_time_to"})
+			return
+		}
+
+		//Не то чтобы это было необходимо, но для подстравховки фронта может пригодиться
+		if toTime.Before(fromTime) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "reservation_time_to must be after reservation_time_from"})
 			return
 		}
 
@@ -164,4 +179,35 @@ func GetUserReservations(db *sqlx.DB) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, reservations)
 	}
+}
+
+func GetFreeTimeSlots(db *sql.DB, tableID int) ([]TimeSlot, error) {
+	query := `
+    WITH booked_slots AS (
+        SELECT 
+            reservation_time_from AS start_time, 
+            reservation_time_to AS end_time
+        FROM reservations
+        WHERE table_id = $1
+    )
+    SELECT 
+        lag(end_time, 1) OVER (ORDER BY start_time) AS free_from,
+        start_time AS free_until
+    FROM booked_slots;
+    `
+	rows, err := db.Query(query, tableID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var freeTimeSlots []TimeSlot
+	for rows.Next() {
+		var slot TimeSlot
+		if err := rows.Scan(&slot.FreeFrom, &slot.FreeUntil); err != nil {
+			return nil, err
+		}
+		freeTimeSlots = append(freeTimeSlots, slot)
+	}
+	return freeTimeSlots, nil
 }
