@@ -5,8 +5,8 @@ import (
 )
 
 /*
- * JSONError отправляет ответ с указанным HTTP-статусом и сообщением об ошибке,
- * а затем прерывает дальнейшую обработку запроса.
+ * JSONError отправляет ответ с указанным HTTP-статусом и сообщением об ошибке.
+ * Возвращает true отправке ошибки.
  */
 func JSONError(c *gin.Context, err error, status int, errMsg string, details ...any) bool {
 	if err != nil {

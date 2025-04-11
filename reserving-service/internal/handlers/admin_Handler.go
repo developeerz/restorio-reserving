@@ -4,19 +4,13 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/dto"
 	"github.com/gin-gonic/gin"
 )
 
-type CreateTableRequest struct {
-	RestaurantID int    `json:"restaurant_id" binding:"required"`
-	TableNumber  string `json:"table_number"`
-	SeatsNumber  int    `json:"seats_number" binding:"required"`
-	Type         string `json:"type"`
-}
-
 func CreateTableHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req CreateTableRequest
+		var req dto.CreateTableRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат запроса"})

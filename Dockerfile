@@ -24,6 +24,9 @@ COPY --from=builder /app/reserving-service-exe /app/
 # Копируем файл секретов
 COPY .postgress-secrets .
 
+# Копируем папку с Swagger документацией
+COPY docs /app/docs/
+
 # Экспортируем порт
 EXPOSE 8082
 

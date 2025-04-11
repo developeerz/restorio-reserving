@@ -1,0 +1,106 @@
+basePath: /
+definitions:
+  dto.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dto.FreeTable:
+    properties:
+      restaurant_name:
+        type: string
+      seats_number:
+        type: integer
+      table_id:
+        type: integer
+      table_number:
+        type: integer
+    type: object
+  dto.ReservationRequest:
+    properties:
+      reservation_time_from:
+        description: Время начала бронирования (RFC3339)
+        type: string
+      reservation_time_to:
+        description: Время окончания бронирования (RFC3339)
+        type: string
+      table_id:
+        description: Идентификатор столика
+        type: integer
+      user_id:
+        description: Идентификатор пользователя
+        type: integer
+    type: object
+host: localhost:8082
+info:
+  contact: {}
+  description: API для бронирования столиков
+  title: Restorio API
+  version: "1.0"
+paths:
+  /free-tables:
+    get:
+      description: Возвращает список доступных столиков на указанный период
+      parameters:
+      - description: Начало периода бронирования (в формате RFC3339)
+        in: query
+        name: reservation_time_from
+        required: true
+        type: string
+      - description: Конец периода бронирования (в формате RFC3339)
+        in: query
+        name: reservation_time_to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.FreeTable'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Получить список свободных столиков
+      tags:
+      - Tables
+  /reservations:
+    post:
+      consumes:
+      - application/json
+      description: Эта функция выполняет бронирование столика для пользователя на
+        указанный период времени.
+      parameters:
+      - description: Информация о бронировании
+        in: body
+        name: reservation
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Бронирование столика
+      tags:
+      - Reservations
+swagger: "2.0"
