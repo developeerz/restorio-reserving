@@ -1,0 +1,1 @@
+CREATE TYPE table_shape AS ENUM ('standard', 'vip', 'bar', 'outdoor');
