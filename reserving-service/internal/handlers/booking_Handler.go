@@ -48,16 +48,16 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 		/* SQL-query */
 		query := `
 			SELECT t.table_id, t.table_number, t.seats_number, r.name AS restaurant_name
-			FROM tables t
-			JOIN restaurants r ON t.restaurant_id = r.restaurant_id
+			FROM "Tables" t
+			JOIN "Restaurants" r ON t.restaurant_id = r.restaurant_id
 			WHERE t.table_id NOT IN (
-				SELECT table_id FROM reservations 
+				SELECT table_id FROM "Reservations" 
 				WHERE NOT (reservation_time_to <= $1 OR reservation_time_from >= $2)
 			);
 		`
 
 		/* request */
-		var freeTables []dto.FreeTable
+		var freeTables []dto.FreeTableResponse
 		err = db.Select(&freeTables, query, fromTime, toTime)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения данных о свободных столиках.", "details": err.Error()})
@@ -110,7 +110,7 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 
 		/* SQL-query */
 		query := `
-			INSERT INTO reservations (table_id, user_id, reservation_time_from, reservation_time_to)
+			INSERT INTO "Reservations" (table_id, user_id, reservation_time_from, reservation_time_to)
 			VALUES ($1, $2, $3, $4)
 			RETURNING reservation_id;
 		`
@@ -131,19 +131,19 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 	}
 }
 
-func GetFreeTimeSlots(db *sql.DB, tableID int) ([]dto.TimeSlot, error) {
+func GetFreeTimeSlots(db *sql.DB, tableID int) ([]dto.TimeSlotResponse, error) {
 	query := `
-    WITH booked_slots AS (
+    WITH "Booked_slots" AS (
         SELECT 
             reservation_time_from AS start_time, 
             reservation_time_to AS end_time
-        FROM reservations
+        FROM "Reservations"
         WHERE table_id = $1
     )
     SELECT 
         lag(end_time, 1) OVER (ORDER BY start_time) AS free_from,
         start_time AS free_until
-    FROM booked_slots;
+    FROM "Booked_slots";
     `
 	rows, err := db.Query(query, tableID)
 	if err != nil {
@@ -151,9 +151,9 @@ func GetFreeTimeSlots(db *sql.DB, tableID int) ([]dto.TimeSlot, error) {
 	}
 	defer rows.Close()
 
-	var freeTimeSlots []dto.TimeSlot
+	var freeTimeSlots []dto.TimeSlotResponse
 	for rows.Next() {
-		var slot dto.TimeSlot
+		var slot dto.TimeSlotResponse
 		if err := rows.Scan(&slot.FreeFrom, &slot.FreeUntil); err != nil {
 			return nil, err
 		}

@@ -11,14 +11,14 @@ type ReservationRequest struct {
 }
 
 /* Responses */
-type FreeTable struct {
+type FreeTableResponse struct {
 	TableID        int    `json:"table_id" db:"table_id"`
 	TableNumber    int    `json:"table_number" db:"table_number"`
 	SeatsNumber    int    `json:"seats_number" db:"seats_number"`
 	RestaurantName string `json:"restaurant_name" db:"restaurant_name"`
 }
 
-type TimeSlot struct {
+type TimeSlotResponse struct {
 	FreeFrom  time.Time `json:"free_from"`
 	FreeUntil time.Time `json:"free_until"`
 }

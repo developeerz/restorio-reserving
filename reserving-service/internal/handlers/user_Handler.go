@@ -29,15 +29,15 @@ func GetUserReservations(db *sqlx.DB) gin.HandlerFunc {
 				r.name AS restaurant_name,
 				rsv.reservation_time_from,
 				rsv.reservation_time_to
-			FROM reservations rsv
-			JOIN tables t ON rsv.table_id = t.table_id
-			JOIN restaurants r ON t.restaurant_id = r.restaurant_id
+			FROM "Reservations" rsv
+			JOIN "Tables" t ON rsv.table_id = t.table_id
+			JOIN "Restaurants" r ON t.restaurant_id = r.restaurant_id
 			WHERE rsv.user_id = $1
 			ORDER BY rsv.reservation_time_from;
 		`
 
 		/* request */
-		var reservations []dto.UserReservation
+		var reservations []dto.UserReservationResponse
 		err = db.Select(&reservations, query, userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения данных: " + err.Error()})

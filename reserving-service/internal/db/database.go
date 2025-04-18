@@ -25,6 +25,7 @@ func InitDB() {
 	DB, err = sqlx.Connect("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", err)
+		log.Print(dsn)
 	}
 	log.Println("Подключение к БД успешно")
 }

@@ -3,7 +3,7 @@ package dto
 import "time"
 
 /* Responses */
-type UserReservation struct {
+type UserReservationResponse struct {
 	ReservationID       int       `db:"reservation_id" json:"reservation_id"`
 	TableID             int       `db:"table_id" json:"table_id"`
 	TableNumber         int       `db:"table_number" json:"table_number"`
