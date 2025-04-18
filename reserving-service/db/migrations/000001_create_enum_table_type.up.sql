@@ -1,0 +1,1 @@
+CREATE TYPE TABLE_TYPE AS ENUM ('standard', 'vip', 'bar', 'outdoor');
