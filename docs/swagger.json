@@ -16,7 +16,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Tables"
+                    "Booking"
                 ],
                 "summary": "Получить список свободных столиков",
                 "parameters": [
@@ -41,7 +41,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.FreeTable"
+                                "$ref": "#/definitions/dto.FreeTableResponse"
                             }
                         }
                     },
@@ -70,7 +70,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Reservations"
+                    "Booking"
                 ],
                 "summary": "Бронирование столика",
                 "parameters": [
@@ -105,9 +105,185 @@
                     }
                 }
             }
+        },
+        "/reservations/user/{user_id}": {
+            "get": {
+                "description": "Возвращает список всех бронирований, сделанных пользователем, включая информацию о ресторане и столике.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Получение всех бронирований пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.UserReservationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tables": {
+            "post": {
+                "description": "Создаёт новый столик в ресторане и сохраняет его позицию, если координаты указаны",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Добавить столик",
+                "parameters": [
+                    {
+                        "description": "Информация о столике",
+                        "name": "table",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateTableRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Столик добавлен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при добавлении столика",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tables/{table_id}/free-times": {
+            "get": {
+                "description": "Возвращает список свободных временных интервалов для бронирования указанного столика.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Получить свободные временные интервалы для столика",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID столика",
+                        "name": "table_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.TimeSlotResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dto.CreateTableRequest": {
+            "type": "object",
+            "required": [
+                "restaurant_id",
+                "seats_number",
+                "shape",
+                "type"
+            ],
+            "properties": {
+                "restaurant_id": {
+                    "type": "integer"
+                },
+                "seats_number": {
+                    "type": "integer"
+                },
+                "shape": {
+                    "description": "ENUM TABLE_SHAPE",
+                    "type": "string"
+                },
+                "table_number": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "ENUM TABLE_TYPE",
+                    "type": "string"
+                },
+                "x": {
+                    "description": "Координаты опционально",
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -116,7 +292,7 @@
                 }
             }
         },
-        "dto.FreeTable": {
+        "dto.FreeTableResponse": {
             "type": "object",
             "properties": {
                 "restaurant_name": {
@@ -150,6 +326,43 @@
                 },
                 "user_id": {
                     "description": "Идентификатор пользователя",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.TimeSlotResponse": {
+            "type": "object",
+            "properties": {
+                "free_from": {
+                    "type": "string"
+                },
+                "free_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserReservationResponse": {
+            "type": "object",
+            "properties": {
+                "reservation_id": {
+                    "type": "integer"
+                },
+                "reservation_time_from": {
+                    "type": "string"
+                },
+                "reservation_time_to": {
+                    "type": "string"
+                },
+                "restaurant_name": {
+                    "type": "string"
+                },
+                "seats_number": {
+                    "type": "integer"
+                },
+                "table_id": {
+                    "type": "integer"
+                },
+                "table_number": {
                     "type": "integer"
                 }
             }

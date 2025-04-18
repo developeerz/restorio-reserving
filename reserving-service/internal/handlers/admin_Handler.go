@@ -11,7 +11,7 @@ import (
 // CreateTableHandler добавляет новый столик и его позицию (если указана).
 // @Summary Добавить столик
 // @Description Создаёт новый столик в ресторане и сохраняет его позицию, если координаты указаны
-// @Tags Tables
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Param table body dto.CreateTableRequest true "Информация о столике"

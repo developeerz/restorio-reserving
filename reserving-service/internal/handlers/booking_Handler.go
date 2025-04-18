@@ -14,11 +14,11 @@ import (
 // GetFreeTables godoc
 // @Summary Получить список свободных столиков
 // @Description Возвращает список доступных столиков на указанный период
-// @Tags Tables
+// @Tags Booking
 // @Produce json
 // @Param reservation_time_from query string true "Начало периода бронирования (в формате RFC3339)"
 // @Param reservation_time_to query string true "Конец периода бронирования (в формате RFC3339)"
-// @Success 200 {array} dto.FreeTable
+// @Success 200 {array} dto.FreeTableResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /free-tables [get]
@@ -74,7 +74,7 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 // BookTable godoc
 // @Summary Бронирование столика
 // @Description Эта функция выполняет бронирование столика для пользователя на указанный период времени.
-// @Tags Reservations
+// @Tags Booking
 // @Accept  json
 // @Produce  json
 // @Param reservation body dto.ReservationRequest true "Информация о бронировании"
@@ -131,6 +131,16 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 	}
 }
 
+// GetFreeTimeSlotsHandler godoc
+// @Summary Получить свободные временные интервалы для столика
+// @Description Возвращает список свободных временных интервалов для бронирования указанного столика.
+// @Tags Booking
+// @Param table_id path int true "ID столика"
+// @Produce json
+// @Success 200 {array} dto.TimeSlotResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tables/{table_id}/free-times [get]
 func GetFreeTimeSlots(db *sql.DB, tableID int) ([]dto.TimeSlotResponse, error) {
 	query := `
     WITH "Booked_slots" AS (

@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS "Tables" (
 	"restaurant_id" INTEGER NOT NULL,
 	"table_number" VARCHAR(255),
 	"seats_number" INTEGER NOT NULL,
-	"type" "TABLE_TYPE",
-	"shape" "TABLE_SHAPE",
+	"type" TABLE_TYPE,
+	"shape" TABLE_SHAPE,
 	PRIMARY KEY("table_id"),
 	FOREIGN KEY ("restaurant_id") REFERENCES "restaurants"("restaurant_id") ON DELETE CASCADE
 );

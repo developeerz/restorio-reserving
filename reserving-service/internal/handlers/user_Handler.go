@@ -9,6 +9,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// GetUserReservations godoc
+// @Summary Получение всех бронирований пользователя
+// @Description Возвращает список всех бронирований, сделанных пользователем, включая информацию о ресторане и столике.
+// @Tags User
+// @Param user_id path int true "ID пользователя"
+// @Produce json
+// @Success 200 {array} dto.UserReservationResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /reservations/user/{user_id} [get]
 func GetUserReservations(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Извлекаем user_id из параметров URL
