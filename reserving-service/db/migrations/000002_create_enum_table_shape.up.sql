@@ -1,0 +1,1 @@
+CREATE TYPE TABLE_SHAPE AS ENUM ('square', 'circle');
