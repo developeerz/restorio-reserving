@@ -54,3 +54,91 @@ func CreateTableHandler(db *sql.DB) gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"table_id": tableID, "message": "Столик добавлен"})
 	}
 }
+
+/*
+func UpdateTableWithPosition(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.CreateTableRequest
+
+		tableIDStr := c.Param("table_id")
+		tableID, err := strconv.Atoi(tableIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат table_id"})
+			return
+		}
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат JSON: " + err.Error()})
+			return
+		}
+
+		tx, err := db.Beginx()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка начала транзакции: " + err.Error()})
+			return
+		}
+		defer tx.Rollback()
+
+		// Обновление столика
+		updateTableQuery := `
+			UPDATE "Tables"
+			SET table_number = $1, seats_number = $2, type = $3, shape = $4
+			WHERE table_id = $5
+		`
+		_, err = tx.Exec(updateTableQuery, req.TableNumber, req.SeatsNumber, req.Type, req.Shape, tableID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления столика: " + err.Error()})
+			return
+		}
+
+		// Обновление позиции (если передано)
+		if req.X != nil && req.Y != nil {
+			updatePositionQuery := `
+				INSERT INTO "Positions" (table_id, x, y)
+				VALUES ($1, $2, $3)
+				ON CONFLICT (table_id) DO UPDATE
+				SET x = EXCLUDED.x, y = EXCLUDED.y
+			`
+			_, err = tx.Exec(updatePositionQuery, tableID, *req.X, *req.Y)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления позиции: " + err.Error()})
+				return
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сохранения изменений: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Столик успешно обновлён"})
+	}
+}
+
+
+func DeleteTable(db *sqlx.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableIDStr := c.Param("table_id")
+		tableID, err := strconv.Atoi(tableIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат table_id"})
+			return
+		}
+
+		query := `DELETE FROM "Tables" WHERE table_id = $1`
+		res, err := db.Exec(query, tableID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка удаления столика: " + err.Error()})
+			return
+		}
+
+		rowsAffected, _ := res.RowsAffected()
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Столик с таким ID не найден"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Столик успешно удалён"})
+	}
+}
+*/

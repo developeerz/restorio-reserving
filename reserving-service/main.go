@@ -29,8 +29,7 @@ func main() {
 
 	// Эндпоинты
 	router.GET("/free-tables", handlers.GetFreeTables(db.DB))
-	router.POST("/reservations", handlers.BookTable(db.DB))
-	router.GET("/users/:user_id/reservations", handlers.GetUserReservations(db.DB))
+	router.POST("/new_reservation", handlers.BookTable(db.DB))
 
 	// Запускаем сервер
 	log.Println("Сервер запущен на порту 8082")
