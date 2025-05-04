@@ -18,7 +18,7 @@ import (
 // @Success 201 {object} map[string]interface{} "Столик добавлен"
 // @Failure 400 {object} map[string]string "Неверный формат запроса"
 // @Failure 500 {object} map[string]string "Ошибка при добавлении столика"
-// @Router /tables [post]
+// @Router /tables/new-table [post]
 func CreateNewTable(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.CreateTableRequest

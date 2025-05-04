@@ -21,7 +21,7 @@ import (
 // @Success 200 {array} dto.FreeTableResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /free-tables [get]
+// @Router /reservations/free-tables [get]
 func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reservationFrom := c.Query("reservation_time_from")
@@ -69,8 +69,6 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 	}
 }
 
-//!!! Поправь ERROR RESPONSES
-
 // BookTable godoc
 // @Summary Бронирование столика
 // @Description Эта функция выполняет бронирование столика для пользователя на указанный период времени.
@@ -81,7 +79,7 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 // @Success 200 {object} dto.ErrorResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /reservations [post]
+// @Router /reservations/new-reservation [post]
 func BookTable(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.ReservationRequest
@@ -140,7 +138,7 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 // @Success 200 {array} dto.TimeSlotResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /reservations/tables/{table_id}/free-times [get]
+// @Router /reservations/:table_id/free-times [get]
 func GetFreeTimeSlotsHandler(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableIDStr := c.Param("table_id")
