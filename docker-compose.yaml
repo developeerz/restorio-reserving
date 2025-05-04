@@ -23,7 +23,7 @@ services:
     volumes:
       - ./reserving-service/db/migrations:/migrations
     depends_on:
-      - postgres
+      - postgres  # Используем имя 'postgres', а не 'reserving-db'
 
   reserving-service:
     build: .
@@ -34,8 +34,6 @@ services:
       - migrate
     ports:
       - "8082:8082"
-    volumes:
-      - .:/app
     env_file:
       - ./.postgress-secrets
   

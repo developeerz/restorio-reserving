@@ -9,9 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var DB *sqlx.DB
-
-func InitDB() {
+func InitDB() *sqlx.DB {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
@@ -22,10 +20,12 @@ func InitDB() {
 	)
 
 	var err error
+	var DB *sqlx.DB
 	DB, err = sqlx.Connect("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", err)
 		log.Print(dsn)
 	}
 	log.Println("Подключение к БД успешно")
+	return DB
 }

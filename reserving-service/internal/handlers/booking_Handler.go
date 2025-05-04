@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"database/sql"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/dto"
@@ -140,8 +140,27 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 // @Success 200 {array} dto.TimeSlotResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /tables/{table_id}/free-times [get]
-func GetFreeTimeSlots(db *sql.DB, tableID int) ([]dto.TimeSlotResponse, error) {
+// @Router /reservations/tables/{table_id}/free-times [get]
+func GetFreeTimeSlotsHandler(db *sqlx.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableIDStr := c.Param("table_id")
+		tableID, err := strconv.Atoi(tableIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректный table_id"})
+			return
+		}
+
+		timeSlots, err := GetFreeTimeSlots(db, tableID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении свободных слотов: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, timeSlots)
+	}
+}
+
+func GetFreeTimeSlots(db *sqlx.DB, tableID int) ([]dto.TimeSlotResponse, error) {
 	query := `
     WITH "Booked_slots" AS (
         SELECT 

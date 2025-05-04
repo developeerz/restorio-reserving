@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS "Reservations" (
 	"status" VARCHAR(255) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL,
 	PRIMARY KEY("reservation_id"),
-	FOREIGN KEY ("table_id") REFERENCES "tables"("table_id") ON DELETE CASCADE
+	FOREIGN KEY ("table_id") REFERENCES "Tables"("table_id") ON DELETE CASCADE
 );

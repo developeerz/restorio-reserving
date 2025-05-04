@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/dto"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 )
 
 // CreateTableHandler добавляет новый столик и его позицию (если указана).
@@ -19,7 +19,7 @@ import (
 // @Failure 400 {object} map[string]string "Неверный формат запроса"
 // @Failure 500 {object} map[string]string "Ошибка при добавлении столика"
 // @Router /tables [post]
-func CreateTableHandler(db *sql.DB) gin.HandlerFunc {
+func CreateNewTable(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.CreateTableRequest
 
