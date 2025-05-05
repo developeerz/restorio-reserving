@@ -13,23 +13,23 @@ import (
 // @Summary Получение всех бронирований пользователя
 // @Description Возвращает список всех бронирований, сделанных пользователем, включая информацию о ресторане и столике.
 // @Tags User
-// @Param user_id path int true "ID пользователя"
+// @Param user_id header int true "ID пользователя"
 // @Produce json
 // @Success 200 {array} dto.UserReservationResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /reservations/user/{user_id} [get]
+// @Router /reservations/user [get]
 func GetUserReservations(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Извлекаем user_id из параметров URL
-		userIDStr := c.Param("user_id")
+		// Получаем user_id из заголовка
+		userIDStr := c.GetHeader("user_id")
 		userID, err := strconv.Atoi(userIDStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат user_id"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат user_id в заголовке"})
 			return
 		}
 
-		/* SQL-query */
+		// SQL-запрос
 		query := `
 			SELECT 
 				rsv.reservation_id, 
@@ -46,7 +46,6 @@ func GetUserReservations(db *sqlx.DB) gin.HandlerFunc {
 			ORDER BY rsv.reservation_time_from;
 		`
 
-		/* request */
 		var reservations []dto.UserReservationResponse
 		err = db.Select(&reservations, query, userID)
 		if err != nil {
@@ -54,7 +53,6 @@ func GetUserReservations(db *sqlx.DB) gin.HandlerFunc {
 			return
 		}
 
-		/* response */
 		c.JSON(http.StatusOK, reservations)
 	}
 }

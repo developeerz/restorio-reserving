@@ -23,7 +23,7 @@ services:
     volumes:
       - ./reserving-service/db/migrations:/migrations
     depends_on:
-      - postgres
+      - postgres  # Используем имя 'postgres', а не 'reserving-db'
 
   reserving-service:
     build: .

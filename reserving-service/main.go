@@ -5,10 +5,9 @@ import (
 
 	_ "github.com/developeerz/restorio-reserving/docs" // Импортируем сгенерированную документацию Swagger
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/db"
-	"github.com/developeerz/restorio-reserving/reserving-service/internal/handlers"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/routes"
 	"github.com/gin-gonic/gin" // Необходимо для доступа к файлам Swagger UI
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/jmoiron/sqlx"
 )
 
 // @title Restorio API
@@ -18,19 +17,14 @@ import (
 // @BasePath /
 func main() {
 	// Инициализируем БД
-	db.InitDB()
-	defer db.DB.Close()
+	var DB *sqlx.DB
+	DB = db.InitDB()
+	defer DB.Close()
 
 	// Создаём роутер
 	router := gin.Default()
 
-	// Роут для Swagger UI
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	// Эндпоинты
-	router.GET("/free-tables", handlers.GetFreeTables(db.DB))
-	router.POST("/reservations", handlers.BookTable(db.DB))
-	router.GET("/users/:user_id/reservations", handlers.GetUserReservations(db.DB))
+	routes.SetupRoutes(router, DB)
 
 	// Запускаем сервер
 	log.Println("Сервер запущен на порту 8082")
