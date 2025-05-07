@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/dto"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/entity"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/mapper"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -106,18 +110,81 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 			return
 		}
 
+		getPayloadQuery := `
+			SELECT 
+				"Restaurants".name,
+				"Restaurants".address,
+				"Tables".table_number
+			FROM "Restaurants"
+			JOIN "Tables" ON "Tables".restaurant_id = "Restaurants".restaurant_id
+			WHERE
+				"Tables".table_id = $1;
+		`
+		var payloadEntities []entity.Payload
+
+		err = db.Select(&payloadEntities, getPayloadQuery, req.TableID)
+		if err != nil {
+			fmt.Println(err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		payload := mapper.ToPayload(payloadEntities[0], toTime.Local().String(), req.UserID)
+
+		payloadByte, err := json.Marshal(&payload)
+		if err != nil {
+			fmt.Println(err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		tx, err := db.BeginTx(c.Request.Context(), nil)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		defer tx.Rollback()
+
 		/* SQL-query */
 		query := `
-			INSERT INTO "Reservations" (table_id, user_id, reservation_time_from, reservation_time_to)
-			VALUES ($1, $2, $3, $4)
+			INSERT INTO "Reservations" (table_id, user_id, reservation_time_from, reservation_time_to, status, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING reservation_id;
 		`
 
-		/* request */
 		var reservationID int
-		err = db.QueryRow(query, req.TableID, req.UserID, fromTime, toTime).Scan(&reservationID) // Используем QueryRow для вставки с возвратом идентификатора
+		err = tx.QueryRow(query, req.TableID, req.UserID, fromTime, toTime, "reserved", time.Now()).Scan(&reservationID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось выполнить бронирование: " + err.Error()})
+			return
+		}
+
+		createOutboxMessageQuery := `
+			INSERT INTO outbox
+				(id, topic, payload, send_time, send_status)
+			VALUES
+				($1, $2, $3, $4, $5);
+		`
+
+		outboxMessage := entity.NewOutboxEntity("", payloadByte, toTime.Local().Add(-1*time.Hour))
+
+		_, err = tx.ExecContext(
+			c.Request.Context(),
+			createOutboxMessageQuery,
+			outboxMessage.ID,
+			outboxMessage.Topic,
+			outboxMessage.Payload,
+			outboxMessage.SendTime,
+			outboxMessage.SendStatus,
+		)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
+			c.Status(http.StatusInternalServerError)
 			return
 		}
 

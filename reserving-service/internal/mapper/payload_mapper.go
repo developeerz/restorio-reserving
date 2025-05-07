@@ -1,0 +1,16 @@
+package mapper
+
+import (
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/entity"
+	"github.com/developeerz/restorio-reserving/reserving-service/pkg/models"
+)
+
+func ToPayload(payloadEntity entity.Payload, reservationTime string, telegramID int) models.PayloadTelegram {
+	return models.PayloadTelegram{
+		RestaurantName:    payloadEntity.RestaurantName,
+		RestaurantAddress: payloadEntity.RestaurantAddress,
+		TableNumber:       payloadEntity.TableNumber,
+		ReservationTime:   reservationTime,
+		TelegramID:        telegramID,
+	}
+}
