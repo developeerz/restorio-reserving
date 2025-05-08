@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/dto"
-	"github.com/developeerz/restorio-reserving/reserving-service/internal/entity"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/mapper"
+	entity "github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres/entity/outbox"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/scheduler"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -84,7 +85,7 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /reservations/new-reservation [post]
-func BookTable(db *sqlx.DB) gin.HandlerFunc {
+func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.ReservationRequest
 		/* Parse input JSON */
@@ -179,6 +180,11 @@ func BookTable(db *sqlx.DB) gin.HandlerFunc {
 			outboxMessage.SendStatus,
 		)
 		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		if err = sched.ScheduleJob(c.Request.Context(), *outboxMessage); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}

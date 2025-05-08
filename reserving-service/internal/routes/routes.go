@@ -3,13 +3,14 @@ package routes
 import (
 	_ "github.com/developeerz/restorio-reserving/docs" // Импортируем сгенерированную документацию Swagger
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/handlers"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/scheduler"
 	"github.com/gin-gonic/gin" // Необходимо для доступа к файлам Swagger UI
 	"github.com/jmoiron/sqlx"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func SetupRoutes(r *gin.Engine, db *sqlx.DB) {
+func SetupRoutes(r *gin.Engine, db *sqlx.DB, scheduler *scheduler.Scheduler) {
 	// Сваггер с генерацией по аннотациям
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -24,7 +25,7 @@ func SetupRoutes(r *gin.Engine, db *sqlx.DB) {
 	reservationGroup := r.Group("/reservations")
 	{
 		reservationGroup.GET("/free-tables", handlers.GetFreeTables(db))
-		reservationGroup.POST("/new-reservation", handlers.BookTable(db))
+		reservationGroup.POST("/new-reservation", handlers.BookTable(db, scheduler))
 		reservationGroup.GET("/user", handlers.GetUserReservations(db))
 	}
 }
