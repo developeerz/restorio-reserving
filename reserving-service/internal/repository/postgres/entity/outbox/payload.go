@@ -1,4 +1,4 @@
-package entity
+package outbox
 
 type Payload struct {
 	RestaurantName    string `db:"name"`

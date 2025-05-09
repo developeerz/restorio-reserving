@@ -1,4 +1,4 @@
-package entity
+package outbox
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type OutboxEntity struct {
+type Entity struct {
 	ID         uuid.UUID
 	Topic      string
 	Payload    []byte
@@ -14,8 +14,8 @@ type OutboxEntity struct {
 	SendStatus bool
 }
 
-func NewOutboxEntity(topic string, payload []byte, sentTime time.Time) *OutboxEntity {
-	return &OutboxEntity{
+func NewOutboxEntity(topic string, payload []byte, sentTime time.Time) *Entity {
+	return &Entity{
 		ID:         uuid.New(),
 		Topic:      topic,
 		Payload:    payload,

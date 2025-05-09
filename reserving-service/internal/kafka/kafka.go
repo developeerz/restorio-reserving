@@ -25,12 +25,11 @@ func NewKafka(brokers []string) *Kafka {
 	}
 }
 
-func (k *Kafka) Send(ctx context.Context, topic string, key string, payload []byte) error {
+func (k *Kafka) Send(ctx context.Context, topic string, payload []byte) error {
 	return k.writer.WriteMessages(
 		ctx,
 		kafka.Message{
 			Topic: topic,
-			Key:   []byte(key),
 			Value: payload,
 		},
 	)

@@ -1,11 +1,11 @@
 package mapper
 
 import (
-	"github.com/developeerz/restorio-reserving/reserving-service/internal/entity"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres/entity/outbox"
 	"github.com/developeerz/restorio-reserving/reserving-service/pkg/models"
 )
 
-func ToPayload(payloadEntity entity.Payload, reservationTime string, telegramID int) models.PayloadTelegram {
+func ToPayload(payloadEntity outbox.Payload, reservationTime string, telegramID int) models.PayloadTelegram {
 	return models.PayloadTelegram{
 		RestaurantName:    payloadEntity.RestaurantName,
 		RestaurantAddress: payloadEntity.RestaurantAddress,
