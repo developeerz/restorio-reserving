@@ -26,5 +26,5 @@ type OutboxRepository interface {
 	GetTablePayload(ctx context.Context, tableID int) (topic string, payload []byte, err error)
 
 	// GetByID извлекает сообщение по ID
-	GetByID(ctx context.Context, id uuid.UUID) (*entity.Entity, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.Outbox, error)
 }

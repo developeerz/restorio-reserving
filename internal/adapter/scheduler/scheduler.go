@@ -2,36 +2,36 @@ package scheduler
 
 import (
 	"context"
+	"time"
 
+	"github.com/developeerz/restorio-reserving/internal/adapter/postgres/entity"
 	"github.com/developeerz/restorio-reserving/internal/port"
 	"github.com/go-co-op/gocron/v2"
 )
 
-type Scheduler struct {
+type scheduler struct {
 	sender     port.NotificationSender
 	outboxRepo port.OutboxRepository
 	cron       gocron.Scheduler
 }
 
-// New создаёт и запускает планировщик (но не регистрирует send-задачи)
 func New(ctx context.Context, sender port.NotificationSender, outboxRepo port.OutboxRepository) (port.Scheduler, error) {
 	cron, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, err
 	}
 
-	s := &Scheduler{
+	s := &scheduler{
 		sender:     sender,
 		outboxRepo: outboxRepo,
 		cron:       cron,
 	}
 
-	return s, s.Start(ctx)
+	return s, s.scheduleDeleteSentJob(ctx)
 }
 
-// ScheduleSendMessageJob регистрирует **однократную** задачу
-func (s *Scheduler) ScheduleSendMessageJob(ctx context.Context, outboxMessage outbox.Entity) error {
-	_, err := s.NewJob(
+func (s *scheduler) ScheduleSendMessageJob(ctx context.Context, outboxMessage entity.Outbox) error {
+	_, err := s.cron.NewJob(
 		gocron.OneTimeJob(
 			gocron.OneTimeJobStartDateTime(outboxMessage.SendTime),
 		),
@@ -44,13 +44,14 @@ func (s *Scheduler) ScheduleSendMessageJob(ctx context.Context, outboxMessage ou
 	return nil
 }
 
-// Start регистрирует периодическую очистку outbox
-func (s *Scheduler) Start(ctx context.Context) error {
-	_, err := s.cron.Every(1).Hour().Do(func() { deleteSentJob(ctx, s.outboxRepo) })
-	return err
-}
+func (s *scheduler) scheduleDeleteSentJob(ctx context.Context) error {
+	_, err := s.cron.NewJob(
+		gocron.DurationJob(time.Hour),
+		gocron.NewTask(deleteSentJob, ctx, s.outboxRepo),
+	)
+	if err != nil {
+		return err
+	}
 
-// Stop останавливает планировщик
-func (s *Scheduler) Stop() {
-	s.cron.Stop()
+	return nil
 }

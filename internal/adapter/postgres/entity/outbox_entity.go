@@ -7,7 +7,7 @@ import (
 )
 
 // Entity — строка таблицы outbox
-type Entity struct {
+type Outbox struct {
 	ID         uuid.UUID `db:"id"`
 	Topic      string    `db:"topic"`
 	Payload    []byte    `db:"payload"`
@@ -16,8 +16,8 @@ type Entity struct {
 }
 
 // NewEntity создаёт новую запись для вставки
-func NewEntity(topic string, payload []byte, sendTime time.Time) *Entity {
-	return &Entity{
+func NewEntity(topic string, payload []byte, sendTime time.Time) *Outbox {
+	return &Outbox{
 		ID:         uuid.New(),
 		Topic:      topic,
 		Payload:    payload,

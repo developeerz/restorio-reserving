@@ -63,8 +63,8 @@ func (r *outboxRepo) CreateOutbox(ctx context.Context, id, topic string, payload
 	return err
 }
 
-func (r *outboxRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.Entity, error) {
-	var e entity.Entity
+func (r *outboxRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.Outbox, error) {
+	var e entity.Outbox
 	err := sqlx.GetContext(ctx, r.db, &e, `
 		SELECT id, topic, payload, send_time
 		FROM outbox

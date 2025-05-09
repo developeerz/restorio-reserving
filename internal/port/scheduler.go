@@ -3,13 +3,9 @@ package port
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/developeerz/restorio-reserving/internal/adapter/postgres/entity"
 )
 
-// Scheduler описывает наш планировщик
 type Scheduler interface {
-	// ScheduleSendMessageJob планирует задачу отправки конкретного сообщения из outbox
-	ScheduleSendMessageJob(ctx context.Context, outboxID uuid.UUID) error
-	// Stop останавливает все задачи
-	Stop()
+	ScheduleSendMessageJob(ctx context.Context, outboxMessage entity.Outbox) error
 }
