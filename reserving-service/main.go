@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	_ "github.com/developeerz/restorio-reserving/docs" // Импортируем сгенерированную документацию Swagger
@@ -19,6 +20,8 @@ import (
 // @host localhost:8082
 // @BasePath /
 func main() {
+	ctx := context.Background()
+
 	// Инициализируем БД
 	var DB *sqlx.DB
 	DB = db.InitDB()
@@ -27,7 +30,7 @@ func main() {
 	outboxRepo := postgres.NewOutboxRepository(DB)
 
 	kafkaSender := kafka.NewKafka(nil)
-	sched, err := scheduler.New(kafkaSender, outboxRepo)
+	sched, err := scheduler.New(ctx, kafkaSender, outboxRepo)
 	if err != nil {
 		log.Fatalf("scheduler init error: %v", err)
 	}

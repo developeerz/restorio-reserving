@@ -184,7 +184,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 			return
 		}
 
-		if err = sched.ScheduleJob(c.Request.Context(), *outboxMessage); err != nil {
+		if err = sched.ScheduleSendMessageJob(c.Request.Context(), *outboxMessage); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}

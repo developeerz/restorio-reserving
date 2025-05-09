@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"time"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres/entity/outbox"
@@ -14,7 +15,7 @@ type Scheduler struct {
 	scheduler  gocron.Scheduler
 }
 
-func New(sender Sender, outboxRepo postgres.OutboxRepository) (*Scheduler, error) {
+func New(ctx context.Context, sender Sender, outboxRepo postgres.OutboxRepository) (*Scheduler, error) {
 	scheduler, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, err
@@ -27,10 +28,15 @@ func New(sender Sender, outboxRepo postgres.OutboxRepository) (*Scheduler, error
 
 	s.scheduler.Start()
 
+	err = s.scheduleDeleteSentJob(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return s, nil
 }
 
-func (s *Scheduler) ScheduleJob(ctx context.Context, outboxMessage outbox.Entity) error {
+func (s *Scheduler) ScheduleSendMessageJob(ctx context.Context, outboxMessage outbox.Entity) error {
 	_, err := s.scheduler.NewJob(
 		gocron.OneTimeJob(
 			gocron.OneTimeJobStartDateTime(outboxMessage.SendTime),
@@ -44,18 +50,14 @@ func (s *Scheduler) ScheduleJob(ctx context.Context, outboxMessage outbox.Entity
 	return nil
 }
 
-func sendMessageJob(ctx context.Context, sender Sender, repo postgres.OutboxRepository, outboxMessage outbox.Entity) error {
-	return repo.Transaction(ctx, func(repo postgres.OutboxRepository) error {
-		err := repo.UpdateSendStatusTrueByID(ctx, outboxMessage.ID)
-		if err != nil {
-			return err
-		}
+func (s *Scheduler) scheduleDeleteSentJob(ctx context.Context) error {
+	_, err := s.scheduler.NewJob(
+		gocron.DurationJob(time.Hour),
+		gocron.NewTask(deleteSentJob, ctx, s.outboxRepo),
+	)
+	if err != nil {
+		return err
+	}
 
-		err = sender.Send(ctx, outboxMessage.Topic, outboxMessage.Payload)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	return nil
 }

@@ -12,6 +12,7 @@ import (
 type OutboxRepository interface {
 	UpdateSendStatusTrueByID(ctx context.Context, id uuid.UUID) error
 	Transaction(ctx context.Context, fn func(repo OutboxRepository) error) error
+	DeleteSent(ctx context.Context) error
 }
 
 type outboxRepository struct {
@@ -79,4 +80,15 @@ func (r *outboxRepository) withTx(tx *sqlx.Tx) *outboxRepository {
 	return &outboxRepository{
 		db: tx,
 	}
+}
+
+func (r *outboxRepository) DeleteSent(ctx context.Context) error {
+	query := `
+		DELETE FROM outbox
+		WHERE send_status = true;
+	`
+
+	_, err := r.db.ExecContext(ctx, query)
+
+	return err
 }
