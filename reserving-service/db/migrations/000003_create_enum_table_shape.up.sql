@@ -1,0 +1,1 @@
+CREATE TYPE RESERVATION_STATUS AS ENUM ('booked', 'canceled', 'pending');

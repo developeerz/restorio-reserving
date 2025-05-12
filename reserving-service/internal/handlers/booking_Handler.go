@@ -53,10 +53,10 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 		/* SQL-query */
 		query := `
 			SELECT t.table_id, t.table_number, t.seats_number, r.name AS restaurant_name
-			FROM "Tables" t
-			JOIN "Restaurants" r ON t.restaurant_id = r.restaurant_id
+			FROM tables t
+			JOIN restaurants r ON t.restaurant_id = r.restaurant_id
 			WHERE t.table_id NOT IN (
-				SELECT table_id FROM "Reservations" 
+				SELECT table_id FROM reservations
 				WHERE NOT (reservation_time_to <= $1 OR reservation_time_from >= $2)
 			);
 		`
@@ -113,13 +113,13 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 
 		getPayloadQuery := `
 			SELECT 
-				"Restaurants".name,
-				"Restaurants".address,
-				"Tables".table_number
-			FROM "Restaurants"
-			JOIN "Tables" ON "Tables".restaurant_id = "Restaurants".restaurant_id
+				restaurants.name,
+				restaurants.address,
+				tables.table_number
+			FROM restaurants
+			JOIN tables ON tables.restaurant_id = restaurants.restaurant_id
 			WHERE
-				"Tables".table_id = $1;
+				tables.table_id = $1;
 		`
 		var payloadEntities []entity.Payload
 
@@ -153,8 +153,8 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 
 		/* SQL-query */
 		query := `
-			INSERT INTO "Reservations" (table_id, user_id, reservation_time_from, reservation_time_to, status, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO reservations (table_id, user_id, reservation_time_from, reservation_time_to, status, created_at)
+			VALUES ($1, $2, $3, $4, 'booked', NOW()::TIMESTAMP)
 			RETURNING reservation_id;
 		`
 
@@ -167,9 +167,9 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 
 		createOutboxMessageQuery := `
 			INSERT INTO outbox
-				(id, topic, payload, send_time, send_status)
+				(id, topic, payload, send_time)
 			VALUES
-				($1, $2, $3, $4, $5);
+				($1, $2, $3, $4);
 		`
 
 		outboxMessage := entity.NewOutboxEntity("", payloadByte, fromTime.Local().Add(-1*time.Hour).Truncate(60*time.Second))
@@ -241,7 +241,7 @@ func GetFreeTimeSlots(db *sqlx.DB, tableID int) ([]dto.TimeSlotResponse, error) 
         SELECT 
             reservation_time_from AS start_time, 
             reservation_time_to AS end_time
-        FROM "Reservations"
+        FROM reservations
         WHERE table_id = $1
     )
     SELECT 

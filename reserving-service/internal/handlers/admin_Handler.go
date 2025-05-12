@@ -31,7 +31,7 @@ func CreateNewTable(db *sqlx.DB) gin.HandlerFunc {
 		// Вставка столика с учётом shape
 		var tableID int
 		query := `
-			INSERT INTO "Tables" (restaurant_id, table_number, seats_number, type, shape)
+			INSERT INTO tables (restaurant_id, table_number, seats_number, type, shape)
 			VALUES ($1, $2, $3, $4, $5)
 			RETURNING table_id
 		`
