@@ -5,6 +5,6 @@ import (
 )
 
 type Sender interface {
-	Send(ctx context.Context, topic string, payload []byte) error
+	Send(ctx context.Context, payload []byte) error
 	Close() error
 }

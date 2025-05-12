@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres"
@@ -13,6 +14,7 @@ type Scheduler struct {
 	sender     Sender
 	outboxRepo postgres.OutboxRepository
 	scheduler  gocron.Scheduler
+	ctx        context.Context
 }
 
 func New(ctx context.Context, sender Sender, outboxRepo postgres.OutboxRepository) (*Scheduler, error) {
@@ -25,6 +27,7 @@ func New(ctx context.Context, sender Sender, outboxRepo postgres.OutboxRepositor
 	s.sender = sender
 	s.outboxRepo = outboxRepo
 	s.scheduler = scheduler
+	s.ctx = context.Background()
 
 	s.scheduler.Start()
 
@@ -36,15 +39,16 @@ func New(ctx context.Context, sender Sender, outboxRepo postgres.OutboxRepositor
 	return s, nil
 }
 
-func (s *Scheduler) ScheduleSendMessageJob(ctx context.Context, outboxMessage outbox.Entity) error {
+func (s *Scheduler) ScheduleSendMessageJob(outboxMessage outbox.Entity) error {
 	_, err := s.scheduler.NewJob(
 		gocron.OneTimeJob(
 			gocron.OneTimeJobStartDateTime(outboxMessage.SendTime),
 		),
-		gocron.NewTask(sendMessageJob, ctx, s.sender, s.outboxRepo, outboxMessage),
+		gocron.NewTask(sendMessageJob, s.ctx, s.sender, s.outboxRepo, outboxMessage),
 	)
+
 	if err != nil {
-		return err
+		return fmt.Errorf("scheduler error: %v", err)
 	}
 
 	return nil
@@ -56,7 +60,7 @@ func (s *Scheduler) scheduleDeleteSentJob(ctx context.Context) error {
 		gocron.NewTask(deleteSentJob, ctx, s.outboxRepo),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("scheduler error: %v", err)
 	}
 
 	return nil

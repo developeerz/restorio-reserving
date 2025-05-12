@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"log"
 
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres/entity/outbox"
@@ -9,13 +10,16 @@ import (
 
 func sendMessageJob(ctx context.Context, sender Sender, repo postgres.OutboxRepository, outboxMessage outbox.Entity) error {
 	return repo.Transaction(ctx, func(repo postgres.OutboxRepository) error {
+		log.Print("start send job")
 		err := repo.UpdateSendStatusTrueByID(ctx, outboxMessage.ID)
 		if err != nil {
+			log.Printf("job error: %v", err)
 			return err
 		}
 
-		err = sender.Send(ctx, outboxMessage.Topic, outboxMessage.Payload)
+		err = sender.Send(ctx, outboxMessage.Payload)
 		if err != nil {
+			log.Printf("job error: %v", err)
 			return err
 		}
 

@@ -9,9 +9,10 @@ import (
 
 type Kafka struct {
 	writer *kafka.Writer
+	topic  string
 }
 
-func NewKafka(brokers []string) *Kafka {
+func NewKafka(brokers []string, topic string) *Kafka {
 	return &Kafka{
 		writer: &kafka.Writer{
 			Addr:         kafka.TCP(brokers...),
@@ -22,14 +23,15 @@ func NewKafka(brokers []string) *Kafka {
 			RequiredAcks: kafka.RequireAll,
 			BatchSize:    1,
 		},
+		topic: topic,
 	}
 }
 
-func (k *Kafka) Send(ctx context.Context, topic string, payload []byte) error {
+func (k *Kafka) Send(ctx context.Context, payload []byte) error {
 	return k.writer.WriteMessages(
 		ctx,
 		kafka.Message{
-			Topic: topic,
+			Topic: k.topic,
 			Value: payload,
 		},
 	)
