@@ -125,12 +125,16 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 
 		err = db.Select(&payloadEntities, getPayloadQuery, req.TableID)
 		if err != nil {
-			fmt.Println(err)
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
-		payload := mapper.ToPayload(payloadEntities[0], toTime.Local().String(), req.UserID)
+		if len(payloadEntities) == 0 {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		payload := mapper.ToPayload(payloadEntities[0], fromTime.Local().String(), req.UserID)
 
 		payloadByte, err := json.Marshal(&payload)
 		if err != nil {
@@ -168,7 +172,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 				($1, $2, $3, $4);
 		`
 
-		outboxMessage := entity.NewOutboxEntity("", payloadByte, toTime.Local().Add(-1*time.Hour))
+		outboxMessage := entity.NewOutboxEntity("", payloadByte, fromTime.Local().Add(-1*time.Hour).Truncate(60*time.Second))
 
 		_, err = tx.ExecContext(
 			c.Request.Context(),
@@ -184,7 +188,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 			return
 		}
 
-		if err = sched.ScheduleSendMessageJob(c.Request.Context(), *outboxMessage); err != nil {
+		if err = sched.ScheduleSendMessageJob(*outboxMessage); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}

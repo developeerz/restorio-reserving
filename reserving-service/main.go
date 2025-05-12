@@ -5,13 +5,13 @@ import (
 	"log"
 
 	_ "github.com/developeerz/restorio-reserving/docs" // Импортируем сгенерированную документацию Swagger
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/config"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/db"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/kafka"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/routes"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/scheduler"
 	"github.com/gin-gonic/gin" // Необходимо для доступа к файлам Swagger UI
-	"github.com/jmoiron/sqlx"
 )
 
 // @title Restorio API
@@ -22,14 +22,19 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Инициализируем БД
-	var DB *sqlx.DB
-	DB = db.InitDB()
+	config, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("error while load config: %v", err)
+	}
+
+	DB := db.InitDB()
+
 	defer DB.Close()
 
 	outboxRepo := postgres.NewOutboxRepository(DB)
 
-	kafkaSender := kafka.NewKafka(nil)
+	kafkaSender := kafka.NewKafka(config.Brokers(), config.Topic())
+
 	sched, err := scheduler.New(ctx, kafkaSender, outboxRepo)
 	if err != nil {
 		log.Fatalf("scheduler init error: %v", err)
