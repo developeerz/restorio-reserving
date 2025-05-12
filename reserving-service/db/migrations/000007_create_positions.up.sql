@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS "Positions" (
 	"x" INTEGER,
 	"y" INTEGER,
 	PRIMARY KEY("table_id"),
-	FOREIGN KEY ("table_id") REFERENCES "Tables"("table_id") ON DELETE CASCADE
+	FOREIGN KEY ("table_id") REFERENCES tables("table_id") ON DELETE CASCADE
 );
