@@ -200,6 +200,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/tables": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tables"
+                ],
+                "summary": "Получение столиков по id ресторана",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "ID ресторана",
+                        "name": "restaurant_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.GetTablesByRestaurantIDResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tables/new-table": {
             "post": {
                 "description": "Создаёт новый столик в ресторане и сохраняет его позицию, если координаты указаны",
@@ -315,6 +359,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GetTablesByRestaurantIDResponse": {
+            "type": "object",
+            "properties": {
+                "tables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Table"
+                    }
+                }
+            }
+        },
         "dto.ReservationRequest": {
             "type": "object",
             "properties": {
@@ -332,6 +387,32 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "description": "Идентификатор пользователя",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.Table": {
+            "type": "object",
+            "properties": {
+                "seats_number": {
+                    "type": "integer"
+                },
+                "shape": {
+                    "type": "string"
+                },
+                "table_id": {
+                    "type": "integer"
+                },
+                "table_number": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
                     "type": "integer"
                 }
             }
