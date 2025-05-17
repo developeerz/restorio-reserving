@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS "Positions";
+DROP TABLE IF EXISTS positions;

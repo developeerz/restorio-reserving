@@ -6,9 +6,9 @@ services:
     env_file:
       - ./.postgress-secrets
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: POSTGRES
+      POSTGRES_PASSWORD: POSTGRES
+      POSTGRES_DB: POSTGRES
     ports:
       - "5432:5432"
     volumes:
@@ -16,8 +16,9 @@ services:
 
   migrate:
     image: migrate/migrate:v4.15.2
-    container_name: reserving-migrate
-    command: ["-path", "/migrations", "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=disable", "up"]
+    container_name: migrate
+    restart: on-failure
+    command: ["-path", "/migrations", "-database", "postgres://POSTGRES:POSTGRES@postgres:5432/POSTGRES?sslmode=disable", "up"]
     env_file:
       - ./.postgress-secrets
     volumes:
@@ -34,8 +35,14 @@ services:
       - migrate
     ports:
       - "8082:8082"
-    env_file:
-      - ./.postgress-secrets
+    environment:
+      DB_USER: POSTGRES
+      DB_PASSWORD: POSTGRES
+      DB_NAME: POSTGRES
+      DB_PORT: 5432
+      DB_HOST: postgres
+      TOPIC: TELEGRAM_TOPIC
+      BROKERS: kafka:9092=value
   
 volumes:
   pg_data:
