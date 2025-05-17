@@ -19,7 +19,6 @@ func (r *TableRepository) GetTablesByRestaurantID(ctx context.Context, restauran
 	query := `
 		SELECT
 			t.table_id,
-			t.restaurant_id,
 			t.table_number,
 			t.seats_number,
 			t.type,
@@ -46,6 +45,7 @@ func (r *TableRepository) GetTablesByRestaurantID(ctx context.Context, restauran
 		if err = rows.Scan(
 			&table.TableID,
 			&table.TableNumber,
+			&table.SeatsNumber,
 			&table.Type,
 			&table.Shape,
 			&table.X,

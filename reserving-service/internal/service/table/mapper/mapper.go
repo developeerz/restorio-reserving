@@ -18,7 +18,7 @@ func mapToTable(table *table.Table) dto.Table {
 }
 
 func MapToTables(tables []table.Table) []dto.Table {
-	tablesDTO := make([]dto.Table, 0, len(tables))
+	tablesDTO := make([]dto.Table, len(tables))
 
 	for i, table := range tables {
 		tablesDTO[i] = mapToTable(&table)
