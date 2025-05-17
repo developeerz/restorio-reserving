@@ -22,3 +22,21 @@ type TimeSlotResponse struct {
 	FreeFrom  time.Time `json:"free_from"`
 	FreeUntil time.Time `json:"free_until"`
 }
+
+type GetTablesByRestaurantIDRequest struct {
+	RestaurantID int `form:"restaurant_id"`
+}
+
+type Table struct {
+	TableID     int    `json:"table_id"`
+	TableNumber string `json:"table_number"`
+	SeatsNumber int    `json:"seats_number"`
+	Type        string `json:"type"`
+	Shape       string `json:"shape"`
+	X           int    `json:"x"`
+	Y           int    `json:"y"`
+}
+
+type GetTablesByRestaurantIDResponse struct {
+	Tables []Table `json:"tables"`
+}

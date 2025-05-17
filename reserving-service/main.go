@@ -7,10 +7,12 @@ import (
 	_ "github.com/developeerz/restorio-reserving/docs" // Импортируем сгенерированную документацию Swagger
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/config"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/db"
+	handler_table "github.com/developeerz/restorio-reserving/reserving-service/internal/handlers/table"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/kafka"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/repository/postgres"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/routes"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/scheduler"
+	service_table "github.com/developeerz/restorio-reserving/reserving-service/internal/service/table"
 	"github.com/gin-gonic/gin" // Необходимо для доступа к файлам Swagger UI
 )
 
@@ -32,6 +34,11 @@ func main() {
 	defer DB.Close()
 
 	outboxRepo := postgres.NewOutboxRepository(DB)
+	tableRepo := postgres.NewTableRepository(DB)
+
+	tableService := service_table.New(tableRepo)
+
+	tableHandler := handler_table.New(tableService)
 
 	kafkaSender := kafka.NewKafka(config.Brokers(), config.Topic())
 
@@ -43,7 +50,7 @@ func main() {
 	// Создаём роутер
 	router := gin.Default()
 
-	routes.SetupRoutes(router, DB, sched)
+	routes.SetupRoutes(router, tableHandler, DB, sched)
 
 	// Запускаем сервер
 	log.Println("Сервер запущен на порту 8082")

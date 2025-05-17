@@ -94,7 +94,7 @@ func UpdateTableWithPosition(db *sql.DB) gin.HandlerFunc {
 		// Обновление позиции (если передано)
 		if req.X != nil && req.Y != nil {
 			updatePositionQuery := `
-				INSERT INTO "Positions" (table_id, x, y)
+				INSERT INTO positions (table_id, x, y)
 				VALUES ($1, $2, $3)
 				ON CONFLICT (table_id) DO UPDATE
 				SET x = EXCLUDED.x, y = EXCLUDED.y
