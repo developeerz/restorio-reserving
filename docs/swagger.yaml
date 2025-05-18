@@ -59,8 +59,12 @@ definitions:
       table_id:
         description: Идентификатор столика
         type: integer
-      user_id:
-        description: Идентификатор пользователя
+    type: object
+  dto.ReservationResponse:
+    properties:
+      message:
+        type: string
+      reservation_id:
         type: integer
     type: object
   dto.Table:
@@ -111,36 +115,6 @@ info:
   title: Restorio API
   version: "1.0"
 paths:
-  /reservations/:table_id/free-times:
-    get:
-      description: Возвращает список свободных временных интервалов для бронирования
-        указанного столика.
-      parameters:
-      - description: ID столика
-        in: path
-        name: table_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/dto.TimeSlotResponse'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Получить свободные временные интервалы для столика
-      tags:
-      - Booking
   /reservations/free-tables:
     get:
       description: Возвращает список доступных столиков на указанный период
@@ -194,7 +168,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.ReservationResponse'
         "400":
           description: Bad Request
           schema:
@@ -251,9 +225,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/dto.GetTablesByRestaurantIDResponse'
-            type: array
+            $ref: '#/definitions/dto.GetTablesByRestaurantIDResponse'
         "400":
           description: Bad Request
           schema:
@@ -265,6 +237,36 @@ paths:
       summary: Получение столиков по id ресторана
       tags:
       - Tables
+  /tables/:table_id/free-times:
+    get:
+      description: Возвращает список свободных временных интервалов для бронирования
+        указанного столика.
+      parameters:
+      - description: ID столика
+        in: path
+        name: table_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.TimeSlotResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Получить свободные временные интервалы для столика
+      tags:
+      - Booking
   /tables/new-table:
     post:
       consumes:

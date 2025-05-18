@@ -5,7 +5,6 @@ import "time"
 /* Requests */
 type ReservationRequest struct {
 	TableID             int    `json:"table_id"`              // Идентификатор столика
-	UserID              int    `json:"user_id"`               // Идентификатор пользователя
 	ReservationTimeFrom string `json:"reservation_time_from"` // Время начала бронирования (RFC3339)
 	ReservationTimeTo   string `json:"reservation_time_to"`   // Время окончания бронирования (RFC3339)
 }
@@ -39,4 +38,14 @@ type Table struct {
 
 type GetTablesByRestaurantIDResponse struct {
 	Tables []Table `json:"tables"`
+}
+
+type AuthHeader struct {
+	UserID int    `header:"X-User-Id"`
+	Auths  string `header:"X-Roles"`
+}
+
+type ReservationResponse struct {
+	ReservationID int    `json:"reservation_id"`
+	Message       string `json:"message"`
 }
