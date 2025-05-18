@@ -81,15 +81,17 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 // @Accept  json
 // @Produce  json
 // @Param reservation body dto.ReservationRequest true "Информация о бронировании"
-// @Success 200 {object} dto.ErrorResponse
+// @Success 200
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /reservations/new-reservation [post]
 func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var err error
 		var req dto.ReservationRequest
+
 		/* Parse input JSON */
-		if err := c.ShouldBindJSON(&req); err != nil {
+		if err = c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -134,7 +136,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 			return
 		}
 
-		payload := mapper.ToPayload(payloadEntities[0], fromTime.Local().String(), req.UserID)
+		payload := mapper.ToPayload(payloadEntities[0], fromTime.Local().String(), -1)
 
 		payloadByte, err := json.Marshal(&payload)
 		if err != nil {
@@ -159,7 +161,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 		`
 
 		var reservationID int
-		err = tx.QueryRow(query, req.TableID, req.UserID, fromTime, toTime, "reserved", time.Now()).Scan(&reservationID)
+		err = tx.QueryRow(query, req.TableID, -1, fromTime, toTime, "reserved", time.Now()).Scan(&reservationID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось выполнить бронирование: " + err.Error()})
 			return
@@ -215,7 +217,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 // @Success 200 {array} dto.TimeSlotResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /reservations/:table_id/free-times [get]
+// @Router /tables/:table_id/free-times [get]
 func GetFreeTimeSlotsHandler(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableIDStr := c.Param("table_id")
