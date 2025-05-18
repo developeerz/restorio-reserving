@@ -211,12 +211,14 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 // @Summary Получить свободные временные интервалы для столика
 // @Description Возвращает список свободных временных интервалов для бронирования указанного столика.
 // @Tags Booking
-// @Param table_id path int true "ID столика"
+// @Param table_id path int true "ID столика" example(1)
+// @Param start    query string true "Начало интервала (формат RFC3339)" example(2025-03-26T08:00:00Z)
+// @Param end      query string true "Конец интервала (формат RFC3339)" example(2025-03-26T22:00:00Z)
 // @Produce json
-// @Success 200 {array} dto.TimeSlotResponse
+// @Success 200 {array} dto.TimeSlotResponse "Пример:\n[  {\"free_from\": {\"Time\":\"2025-03-26T08:00:00Z\",\"Valid\":true},\"free_until\": {\"Time\":\"2025-03-26T10:00:00Z\",\"Valid\":true}},  {\"free_from\": {\"Time\":\"2025-03-26T12:00:00Z\",\"Valid\":true},\"free_until\": {\"Time\":\"2025-03-26T18:00:00Z\",\"Valid\":true}}]"
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /tables/:table_id/free-times [get]
+// @Router /tables/{table_id}/free-times [get]
 func GetFreeTimeSlotsHandler(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableIDStr := c.Param("table_id")
@@ -226,7 +228,32 @@ func GetFreeTimeSlotsHandler(db *sqlx.DB) gin.HandlerFunc {
 			return
 		}
 
-		timeSlots, err := GetFreeTimeSlots(db, tableID)
+		startStr := c.Query("start")
+		endStr := c.Query("end")
+
+		if startStr == "" || endStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Параметры `start` и `end` обязательны"})
+			return
+		}
+
+		start, err := time.Parse(time.RFC3339, startStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат параметра `start`, ожидается RFC3339"})
+			return
+		}
+
+		end, err := time.Parse(time.RFC3339, endStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат параметра `end`, ожидается RFC3339"})
+			return
+		}
+
+		if !start.Before(end) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "`start` должен быть раньше `end`"})
+			return
+		}
+
+		timeSlots, err := GetFreeTimeSlots(db, tableID, start, end)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении свободных слотов: " + err.Error()})
 			return
@@ -236,33 +263,63 @@ func GetFreeTimeSlotsHandler(db *sqlx.DB) gin.HandlerFunc {
 	}
 }
 
-func GetFreeTimeSlots(db *sqlx.DB, tableID int) ([]dto.TimeSlotResponse, error) {
+func GetFreeTimeSlots(db *sqlx.DB, tableID int, dayStart, dayEnd time.Time) ([]dto.TimeSlotResponse, error) {
 	query := `
-    WITH "Booked_slots" AS (
-        SELECT 
-            reservation_time_from AS start_time, 
-            reservation_time_to AS end_time
-        FROM reservations
-        WHERE table_id = $1
-    )
-    SELECT 
-        lag(end_time, 1) OVER (ORDER BY start_time) AS free_from,
-        start_time AS free_until
-    FROM "Booked_slots";
-    `
-	rows, err := db.Query(query, tableID)
+	WITH params AS (
+		SELECT 
+			$1::int AS table_id,
+			$2::timestamp AS day_start,
+			$3::timestamp AS day_end
+	),
+	booked_slots AS (
+		SELECT 
+			reservation_time_from AS start_time,
+			reservation_time_to AS end_time
+		FROM reservations r
+		JOIN params p ON r.table_id = p.table_id
+		WHERE reservation_time_from >= p.day_start AND reservation_time_to <= p.day_end
+	),
+	ordered_slots AS (
+		SELECT
+			start_time,
+			end_time,
+			LAG(end_time) OVER (ORDER BY start_time) AS prev_end
+		FROM booked_slots
+	),
+	free_slots AS (
+		-- Интервалы между бронированиями
+		SELECT
+			prev_end AS free_from,
+			start_time AS free_until
+		FROM ordered_slots
+		WHERE prev_end IS NOT NULL
+
+		UNION ALL
+
+		-- Интервал до первой брони
+		SELECT
+			p.day_start AS free_from,
+			(SELECT MIN(start_time) FROM booked_slots) AS free_until
+		FROM params p
+
+		UNION ALL
+
+		-- Интервал после последней брони
+		SELECT
+			(SELECT MAX(end_time) FROM booked_slots) AS free_from,
+			p.day_end AS free_until
+		FROM params p
+	)
+	SELECT *
+	FROM free_slots
+	WHERE free_from < free_until
+	ORDER BY free_from;
+	`
+
+	var slots []dto.TimeSlotResponse
+	err := db.Select(&slots, query, tableID, dayStart, dayEnd)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var freeTimeSlots []dto.TimeSlotResponse
-	for rows.Next() {
-		var slot dto.TimeSlotResponse
-		if err := rows.Scan(&slot.FreeFrom, &slot.FreeUntil); err != nil {
-			return nil, err
-		}
-		freeTimeSlots = append(freeTimeSlots, slot)
-	}
-	return freeTimeSlots, nil
+	return slots, nil
 }

@@ -87,8 +87,10 @@ definitions:
   dto.TimeSlotResponse:
     properties:
       free_from:
+        example: "2025-03-26T08:00:00Z"
         type: string
       free_until:
+        example: "2025-03-26T10:00:00Z"
         type: string
     type: object
   dto.UserReservationResponse:
@@ -237,21 +239,36 @@ paths:
       summary: Получение столиков по id ресторана
       tags:
       - Tables
-  /tables/:table_id/free-times:
+  /tables/{table_id}/free-times:
     get:
       description: Возвращает список свободных временных интервалов для бронирования
         указанного столика.
       parameters:
       - description: ID столика
+        example: 1
         in: path
         name: table_id
         required: true
         type: integer
+      - description: Начало интервала (формат RFC3339)
+        example: "2025-03-26T08:00:00Z"
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: Конец интервала (формат RFC3339)
+        example: "2025-03-26T22:00:00Z"
+        in: query
+        name: end
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'Пример:\n[  {\"free_from\": {\"Time\":\"2025-03-26T08:00:00Z\",\"Valid\":true},\"free_until\":
+            {\"Time\":\"2025-03-26T10:00:00Z\",\"Valid\":true}},  {\"free_from\":
+            {\"Time\":\"2025-03-26T12:00:00Z\",\"Valid\":true},\"free_until\": {\"Time\":\"2025-03-26T18:00:00Z\",\"Valid\":true}}]'
           schema:
             items:
               $ref: '#/definitions/dto.TimeSlotResponse'

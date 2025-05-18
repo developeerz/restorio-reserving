@@ -18,10 +18,9 @@ type FreeTableResponse struct {
 }
 
 type TimeSlotResponse struct {
-	FreeFrom  time.Time `json:"free_from"`
-	FreeUntil time.Time `json:"free_until"`
+	FreeFrom  *time.Time `db:"free_from"  json:"free_from"  example:"2025-03-26T08:00:00Z"`
+	FreeUntil *time.Time `db:"free_until" json:"free_until" example:"2025-03-26T10:00:00Z"`
 }
-
 type GetTablesByRestaurantIDRequest struct {
 	RestaurantID int `form:"restaurant_id"`
 }
