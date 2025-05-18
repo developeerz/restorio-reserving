@@ -197,50 +197,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/tables/:table_id/free-times": {
-            "get": {
-                "description": "Возвращает список свободных временных интервалов для бронирования указанного столика.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Booking"
-                ],
-                "summary": "Получить свободные временные интервалы для столика",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID столика",
-                        "name": "table_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.TimeSlotResponse"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/tables/new-table": {
             "post": {
                 "description": "Создаёт новый столик в ресторане и сохраняет его позицию, если координаты указаны",
@@ -289,6 +245,67 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/tables/{table_id}/free-times": {
+            "get": {
+                "description": "Возвращает список свободных временных интервалов для бронирования указанного столика.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Получить свободные временные интервалы для столика",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "ID столика",
+                        "name": "table_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-03-26T08:00:00Z",
+                        "description": "Начало интервала (формат RFC3339)",
+                        "name": "start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-03-26T22:00:00Z",
+                        "description": "Конец интервала (формат RFC3339)",
+                        "name": "end",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пример:\\n[  {\\\"free_from\\\": {\\\"Time\\\":\\\"2025-03-26T08:00:00Z\\\",\\\"Valid\\\":true},\\\"free_until\\\": {\\\"Time\\\":\\\"2025-03-26T10:00:00Z\\\",\\\"Valid\\\":true}},  {\\\"free_from\\\": {\\\"Time\\\":\\\"2025-03-26T12:00:00Z\\\",\\\"Valid\\\":true},\\\"free_until\\\": {\\\"Time\\\":\\\"2025-03-26T18:00:00Z\\\",\\\"Valid\\\":true}}]",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.TimeSlotResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -425,10 +442,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "free_from": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-03-26T08:00:00Z"
                 },
                 "free_until": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-03-26T10:00:00Z"
                 }
             }
         },
