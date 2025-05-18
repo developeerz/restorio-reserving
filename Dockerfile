@@ -22,7 +22,7 @@ WORKDIR /app/
 COPY --from=builder /app/reserving-service-exe /app/
 
 # Копируем файл секретов
-COPY .postgress-secrets .
+# COPY .postgress-secrets .
 
 # Копируем папку с Swagger документацией
 COPY docs /app/docs/
