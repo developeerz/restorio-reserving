@@ -41,6 +41,11 @@ type GetTablesByRestaurantIDResponse struct {
 }
 
 type AuthHeader struct {
-	UserID int      `header:"X-User-Id"`
-	Auths  []string `header:"X-Roles"`
+	UserID int    `header:"X-User-Id"`
+	Auths  string `header:"X-Roles"`
+}
+
+type ReservationResponse struct {
+	ReservationID int    `json:"reservation_id"`
+	Message       string `json:"message"`
 }

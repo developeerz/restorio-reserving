@@ -4,6 +4,7 @@ import (
 	_ "github.com/developeerz/restorio-reserving/docs" // Импортируем сгенерированную документацию Swagger
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/handlers"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/handlers/table"
+	"github.com/developeerz/restorio-reserving/reserving-service/internal/middleware"
 	"github.com/developeerz/restorio-reserving/reserving-service/internal/scheduler"
 	"github.com/gin-gonic/gin" // Необходимо для доступа к файлам Swagger UI
 	"github.com/jmoiron/sqlx"
@@ -27,7 +28,7 @@ func SetupRoutes(r *gin.Engine, h *table.Handler, db *sqlx.DB, scheduler *schedu
 	reservationGroup := r.Group("/reservations")
 	{
 		reservationGroup.GET("/free-tables", handlers.GetFreeTables(db))
-		reservationGroup.POST("/new-reservation", handlers.BookTable(db, scheduler))
+		reservationGroup.POST("/new-reservation", middleware.AuthUserMiddleware, handlers.BookTable(db, scheduler))
 		reservationGroup.GET("/user", handlers.GetUserReservations(db))
 	}
 }

@@ -15,50 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/reservations/:table_id/free-times": {
-            "get": {
-                "description": "Возвращает список свободных временных интервалов для бронирования указанного столика.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Booking"
-                ],
-                "summary": "Получить свободные временные интервалы для столика",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID столика",
-                        "name": "table_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.TimeSlotResponse"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/reservations/free-tables": {
             "get": {
                 "description": "Возвращает список доступных столиков на указанный период",
@@ -138,7 +94,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.ReservationResponse"
                         }
                     },
                     "400": {
@@ -223,9 +179,50 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
+                            "$ref": "#/definitions/dto.GetTablesByRestaurantIDResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tables/:table_id/free-times": {
+            "get": {
+                "description": "Возвращает список свободных временных интервалов для бронирования указанного столика.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Получить свободные временные интервалы для столика",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID столика",
+                        "name": "table_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.GetTablesByRestaurantIDResponse"
+                                "$ref": "#/definitions/dto.TimeSlotResponse"
                             }
                         }
                     },
@@ -384,9 +381,16 @@ const docTemplate = `{
                 "table_id": {
                     "description": "Идентификатор столика",
                     "type": "integer"
+                }
+            }
+        },
+        "dto.ReservationResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
                 },
-                "user_id": {
-                    "description": "Идентификатор пользователя",
+                "reservation_id": {
                     "type": "integer"
                 }
             }

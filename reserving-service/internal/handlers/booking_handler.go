@@ -81,7 +81,7 @@ func GetFreeTables(db *sqlx.DB) gin.HandlerFunc {
 // @Accept  json
 // @Produce  json
 // @Param reservation body dto.ReservationRequest true "Информация о бронировании"
-// @Success 200
+// @Success 200 {object} dto.ReservationResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /reservations/new-reservation [post]
@@ -89,6 +89,8 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var err error
 		var req dto.ReservationRequest
+
+		userID := c.GetInt("userID")
 
 		/* Parse input JSON */
 		if err = c.ShouldBindJSON(&req); err != nil {
@@ -136,7 +138,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 			return
 		}
 
-		payload := mapper.ToPayload(payloadEntities[0], fromTime.Local().String(), -1)
+		payload := mapper.ToPayload(payloadEntities[0], fromTime.Local().String(), userID)
 
 		payloadByte, err := json.Marshal(&payload)
 		if err != nil {
@@ -161,7 +163,7 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 		`
 
 		var reservationID int
-		err = tx.QueryRow(query, req.TableID, -1, fromTime, toTime, "reserved", time.Now()).Scan(&reservationID)
+		err = tx.QueryRow(query, req.TableID, userID, fromTime, toTime).Scan(&reservationID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось выполнить бронирование: " + err.Error()})
 			return
@@ -169,9 +171,9 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 
 		createOutboxMessageQuery := `
 			INSERT INTO outbox
-				(id, topic, payload, send_time)
+				(id, topic, payload, send_time, send_status)
 			VALUES
-				($1, $2, $3, $4);
+				($1, $2, $3, $4, $5);
 		`
 
 		outboxMessage := entity.NewOutboxEntity("", payloadByte, fromTime.Local().Add(-1*time.Hour).Truncate(60*time.Second))
@@ -186,25 +188,22 @@ func BookTable(db *sqlx.DB, sched *scheduler.Scheduler) gin.HandlerFunc {
 			outboxMessage.SendStatus,
 		)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось выполнить бронирование: " + err.Error()})
 			return
 		}
 
 		if err = sched.ScheduleSendMessageJob(*outboxMessage); err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось выполнить бронирование: " + err.Error()})
 			return
 		}
 
 		if err = tx.Commit(); err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось выполнить бронирование: " + err.Error()})
 			return
 		}
 
 		/* response */
-		c.JSON(http.StatusOK, gin.H{
-			"reservation_id": reservationID,
-			"message":        "Столик успешно забронирован",
-		})
+		c.JSON(http.StatusOK, dto.ReservationResponse{ReservationID: reservationID, Message: "Столик забронирован"})
 	}
 }
 
